@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  app:
+    image: golang:1.26-alpine
+    container_name: go_app
+    restart: "no"
+    working_dir: /app
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+    env_file:
+      - .env
+    command: sh -c "go mod download && go run ."
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: go_postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  redis:
+    image: redis:8-alpine
+    container_name: go_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  migration:
+    image: migrate/migrate
+    restart: on-failure
+    command: --path=/migrations/ --database="${DB_CONNECTION}" up
+    volumes:
+      - ./migrations:/migrations
+    env_file:
+      - .env
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  go-mod-cache:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge
