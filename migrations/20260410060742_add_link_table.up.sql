@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS link
+(
+    id SMALLSERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW(),
+    short_code VARCHAR(100) UNIQUE,
+    original_url TEXT NOT NULL,
+    visits INTEGER DEFAULT 0
+);

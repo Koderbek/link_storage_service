@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app:
     image: golang:1.26-alpine
@@ -15,7 +13,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      postgres_db:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -68,8 +66,10 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres_db:
+      postgres:
         condition: service_healthy
+    networks:
+      - app-network
 
 volumes:
   pgdata:
