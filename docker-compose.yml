@@ -9,13 +9,13 @@ services:
       - go-mod-cache:/go/pkg/mod
     env_file:
       - .env
-    command: sh -c "go mod download && go run ."
+    command: sh -c "go mod download && go run ./cmd/api/main.go"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      memcached:
         condition: service_healthy
       migration:
         condition: service_completed_successfully
@@ -40,16 +40,14 @@ services:
     networks:
       - app-network
 
-  redis:
-    image: redis:8-alpine
-    container_name: go_redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: go_memcached
+    command: [ "-m", "64", "-t", "2" ]
     ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
+      - "11211:11211"
     healthcheck:
-      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      test: [ "CMD-SHELL", "echo 'stats' | nc -w 2 localhost 11211 | grep -q 'STAT'" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -74,7 +72,6 @@ services:
 volumes:
   pgdata:
   go-mod-cache:
-  redis-data:
 
 networks:
   app-network:
