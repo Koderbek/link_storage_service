@@ -1,0 +1,26 @@
+### Переменные
+@baseUrl = http://localhost:8080
+@shortCode = c
+
+### 1. Создание короткой ссылки
+POST {{baseUrl}}/links
+Content-Type: application/json
+
+{
+  "url": "https://test24.com/some/very/long/url"
+}
+
+### 2. Получение оригинальной ссылки
+GET {{baseUrl}}/links/{{shortCode}}
+Accept: application/json
+
+### 3. Получение списка ссылок
+GET {{baseUrl}}/links?limit=10&offset=20
+Accept: application/json
+
+### 4. Статистика
+GET {{baseUrl}}/links/{{shortCode}}/stats
+Accept: application/json
+
+### 5. Удаление ссылки
+DELETE {{baseUrl}}/links/{{shortCode}}

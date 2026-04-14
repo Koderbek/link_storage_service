@@ -1,19 +1,17 @@
 package database
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/Koderbek/link_storage_service/internal/model"
 	"github.com/jmoiron/sqlx"
 )
 
 type LinkRepository interface {
-	Create(url, code string) error
-	Link(code string) (*model.Link, error)
-	Links(limit, offset int) ([]model.Link, error)
-	Delete(code string) error
-	Stats(code string) (*model.LinkStats, error)
+	Create(url string) (uint, error)
+	Link(id uint) (*model.Link, error)
+	Links(limit, offset uint) ([]model.Link, error)
+	Delete(id uint) error
+	Stats(id uint) (*model.LinkStats, error)
 }
 
 type Repository struct {
@@ -24,39 +22,36 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (repo *Repository) Create(url, code string) error {
+func (repo *Repository) Create(url string) (uint, error) {
+	var id uint
 	query := fmt.Sprintf(
-		"INSERT INTO %s (original_url, short_code) VALUES ($1, $2);",
+		"INSERT INTO %s (original_url) VALUES ($1) RETURNING id;",
 		LinkTable,
 	)
 
-	_, err := repo.db.Exec(query, url, code)
+	err := repo.db.QueryRowx(query, url).Scan(&id)
 
-	return err
+	return id, err
 }
 
-func (repo *Repository) Link(code string) (*model.Link, error) {
+func (repo *Repository) Link(id uint) (*model.Link, error) {
 	var link model.Link
 	query := fmt.Sprintf(
-		"SELECT original_url, visits FROM %s WHERE short_code = $1",
+		"SELECT id, original_url, visits FROM %s WHERE id = $1",
 		LinkTable,
 	)
 
-	if err := repo.db.Get(&link, query, code); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
+	if err := repo.db.Get(&link, query, id); err != nil {
 		return nil, err
 	}
 
 	return &link, nil
 }
 
-func (repo *Repository) Links(limit, offset int) ([]model.Link, error) {
+func (repo *Repository) Links(limit, offset uint) ([]model.Link, error) {
 	var links []model.Link
 	query := fmt.Sprintf(
-		"SELECT original_url, visits FROM %s ORDER BY id LIMIT $1 OFFSET $2",
+		"SELECT id, original_url, visits FROM %s ORDER BY id LIMIT $1 OFFSET $2",
 		LinkTable,
 	)
 
@@ -67,29 +62,25 @@ func (repo *Repository) Links(limit, offset int) ([]model.Link, error) {
 	return links, nil
 }
 
-func (repo *Repository) Delete(code string) error {
+func (repo *Repository) Delete(id uint) error {
 	query := fmt.Sprintf(
-		"DELETE FROM %s WHERE short_code = $1",
+		"DELETE FROM %s WHERE id = $1",
 		LinkTable,
 	)
 
-	_, err := repo.db.Exec(query, code)
+	_, err := repo.db.Exec(query, id)
 
 	return err
 }
 
-func (repo *Repository) Stats(code string) (*model.LinkStats, error) {
+func (repo *Repository) Stats(id uint) (*model.LinkStats, error) {
 	var stats model.LinkStats
 	query := fmt.Sprintf(
-		"SELECT original_url, short_code, created_at, visits FROM %s WHERE short_code = $1",
+		"SELECT id, original_url, created_at, visits FROM %s WHERE id = $1",
 		LinkTable,
 	)
 
-	if err := repo.db.Get(&stats, query, code); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
+	if err := repo.db.Get(&stats, query, id); err != nil {
 		return nil, err
 	}
 

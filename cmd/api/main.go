@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/Koderbek/link_storage_service/internal/config"
 	"github.com/Koderbek/link_storage_service/internal/database"
+	"github.com/Koderbek/link_storage_service/internal/server"
+	"net/http"
 )
 
 func main() {
@@ -15,12 +17,8 @@ func main() {
 
 	defer db.Close()
 	repo := database.NewRepository(db)
-
-	//TODO: test
-	repo.Create("https://github.com/jmoiron/sqlx", "abc123")
-	link, err := repo.Link("abc1234")
-	if err != nil {
+	srv := server.NewServer(repo)
+	if err = http.ListenAndServe(":8080", srv); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(link)
 }
