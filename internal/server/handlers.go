@@ -51,6 +51,10 @@ func (s *Server) handleLink() http.HandlerFunc {
 			return
 		}
 
+		if s.repo.UpdateVisits(id) != nil {
+			respondError(w, http.StatusNotFound, err)
+		}
+
 		respond(w, http.StatusOK, link)
 	}
 }
