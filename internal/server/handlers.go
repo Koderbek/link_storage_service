@@ -75,7 +75,12 @@ func (s *Server) handleLinks() http.HandlerFunc {
 			return
 		}
 
-		respond(w, http.StatusOK, links)
+		var urls []string
+		for _, link := range links {
+			urls = append(urls, link.Url)
+		}
+
+		respond(w, http.StatusOK, urls)
 	}
 }
 
@@ -104,6 +109,10 @@ func (s *Server) handleStatsLink() http.HandlerFunc {
 		}
 
 		stats.Code = helper.IdToCode(stats.Id)
+		cacheVisits, ok := s.cache.GetCurVisits(code)
+		if ok {
+			stats.Visits = cacheVisits
+		}
 
 		respond(w, http.StatusOK, stats)
 	}

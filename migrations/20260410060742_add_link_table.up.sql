@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS link
 (
     id SERIAL PRIMARY KEY,
-    original_url TEXT NOT NULL,
+    original_url TEXT UNIQUE,
     created_at TIMESTAMP DEFAULT NOW(),
     visits INTEGER DEFAULT 0
 );

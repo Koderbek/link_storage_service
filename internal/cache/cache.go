@@ -55,6 +55,18 @@ func (c *LinkCache) GetAndIncr(key string) (*LinkCacheItem, error) {
 	return val, nil
 }
 
+func (c *LinkCache) GetCurVisits(key string) (uint, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	val, ok := c.links[key]
+	if !ok {
+		return 0, false
+	}
+
+	return val.Visits, true
+}
+
 func (c *LinkCache) Delete(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
