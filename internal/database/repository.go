@@ -10,7 +10,7 @@ type LinkRepository interface {
 	Create(url string) (uint, error)
 	Link(id uint) (*model.Link, error)
 	Links(limit, offset uint) ([]model.Link, error)
-	UpdateVisits(id uint) error
+	UpdateVisits(id, visits uint) error
 	Delete(id uint) error
 	Stats(id uint) (*model.LinkStats, error)
 }
@@ -63,13 +63,13 @@ func (repo *Repository) Links(limit, offset uint) ([]model.Link, error) {
 	return links, nil
 }
 
-func (repo *Repository) UpdateVisits(id uint) error {
+func (repo *Repository) UpdateVisits(id, visits uint) error {
 	query := fmt.Sprintf(
-		"UPDATE %s SET visits = visits + 1 WHERE id = $1",
+		"UPDATE %s SET visits = $1 WHERE id = $2",
 		LinkTable,
 	)
 
-	if _, err := repo.db.Exec(query, id); err != nil {
+	if _, err := repo.db.Exec(query, visits, id); err != nil {
 		return err
 	}
 

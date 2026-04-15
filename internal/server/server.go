@@ -2,17 +2,19 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/Koderbek/link_storage_service/internal/cache"
 	"github.com/Koderbek/link_storage_service/internal/database"
 	"net/http"
 )
 
 type Server struct {
 	repo   *database.Repository
+	cache  *cache.LinkCache
 	router *http.ServeMux
 }
 
-func NewServer(repo *database.Repository) *Server {
-	s := &Server{repo: repo, router: http.NewServeMux()}
+func NewServer(repo *database.Repository, cache *cache.LinkCache) *Server {
+	s := &Server{repo: repo, cache: cache, router: http.NewServeMux()}
 	s.configureRouter()
 
 	return s

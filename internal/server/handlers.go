@@ -43,16 +43,10 @@ func (s *Server) handleCreateLink() http.HandlerFunc {
 func (s *Server) handleLink() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		code := r.PathValue("short_code")
-		id := helper.CodeToId(code)
-
-		link, err := s.repo.Link(id)
+		link, err := s.cache.GetAndIncr(code)
 		if err != nil {
 			respondError(w, http.StatusNotFound, err)
 			return
-		}
-
-		if s.repo.UpdateVisits(id) != nil {
-			respondError(w, http.StatusNotFound, err)
 		}
 
 		respond(w, http.StatusOK, link)
@@ -94,6 +88,7 @@ func (s *Server) handleDeleteLink() http.HandlerFunc {
 			return
 		}
 
+		s.cache.Delete(code)
 		respond(w, http.StatusNoContent, nil)
 	}
 }

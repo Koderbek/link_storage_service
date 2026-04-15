@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Koderbek/link_storage_service/internal/cache"
 	"github.com/Koderbek/link_storage_service/internal/config"
 	"github.com/Koderbek/link_storage_service/internal/database"
 	"github.com/Koderbek/link_storage_service/internal/server"
@@ -17,7 +18,8 @@ func main() {
 
 	defer db.Close()
 	repo := database.NewRepository(db)
-	srv := server.NewServer(repo)
+	linkCache := cache.NewLinkCache(repo)
+	srv := server.NewServer(repo, linkCache)
 	if err = http.ListenAndServe(":8080", srv); err != nil {
 		fmt.Println(err)
 	}
